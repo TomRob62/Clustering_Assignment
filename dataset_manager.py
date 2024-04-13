@@ -47,6 +47,7 @@ class Dataset_Manager:
     # cancer dataset
     cancer_data = []
     cancer_labels = []
+    cancer_classes = []
 
     def __init__(self) -> None:
         """
@@ -75,9 +76,10 @@ class Dataset_Manager:
         cancer = datasets.load_breast_cancer()
         self.cancer_data = cancer.data
         self.cancer_labels = cancer.target
+        self.cancer_classes = cancer.target_names
         # min/max normalizing data
         self.cancer_data = (self.cancer_data-np.min(self.cancer_data))/(np.max(self.cancer_data)-np.min(self.cancer_data))
-        
+
         return None
     # end definition __init__()]
 
