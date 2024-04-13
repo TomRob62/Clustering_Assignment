@@ -79,7 +79,7 @@ class My_KNN:
             accuracy += prediction[0]
 
         # return accuracy
-        return accuracy/len(accuracy)
+        return accuracy/len(list_of_predictions)
 
     def predict_var(self, var1: list) -> int | str:
         """
@@ -113,10 +113,10 @@ class My_KNN:
         for distance in sorted_list[:self.k]:
             c_index = list_of_distance.index(distance)
             c_class = self.train_label_ds[c_index]
-            neighbors[self.my_classes.index(c_class)] += 1
+            neighbors[c_class] += 1
         
         # returning the class of majority vote
-        return self.my_classes[neighbors.index(max(neighbors))]
+        return neighbors.index(max(neighbors))
 
     def euclidean_distance(var1: list, var2: list) -> float:
         """
