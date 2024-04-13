@@ -68,12 +68,16 @@ class Dataset_Manager:
         self.boston_data = np.hstack(
             [raw_df.values[::2, :], raw_df.values[1::2, :2]])
         self.boston_labels = raw_df.values[1::2, 2]
-
+        # min/max normalizing data
+        self.boston_data = (self.boston_data-np.min(self.boston_data))/(np.max(self.boston_data)-np.min(self.boston_data))
+        
         # cancer dataset
         cancer = datasets.load_breast_cancer()
         self.cancer_data = cancer.data
         self.cancer_labels = cancer.target
-
+        # min/max normalizing data
+        self.cancer_data = (self.cancer_data-np.min(self.cancer_data))/(np.max(self.cancer_data)-np.min(self.cancer_data))
+        
         return None
     # end definition __init__()]
 
