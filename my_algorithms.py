@@ -23,6 +23,8 @@ class My_KNN:
 
     Functions
     ---------
+    test_knn()
+    predict_var()
     euclidean_distance()
     """
     # k refers to the number of neighbors looked at
