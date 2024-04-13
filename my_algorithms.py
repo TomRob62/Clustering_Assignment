@@ -29,13 +29,12 @@ class My_KNN:
     """
     # k refers to the number of neighbors looked at
     k = 0
-    my_classes = []
     train_data_ds = []
     train_label_ds = []
     test_data_ds = []
     test_label_ds = []
 
-    def __init__(self, train_data:list, train_label:list, test_data: list, test_label: list, classes: list[int | str], k: int) -> None:
+    def __init__(self, train_data:list, train_label:list, test_data: list, test_label: list, k: int) -> None:
         """
         Constructor Function
 
@@ -49,7 +48,6 @@ class My_KNN:
         self.train_label_ds = train_label
         self.test_data_ds = test_data
         self.test_label_ds = test_label
-        self.my_classes = classes
         self.k = k
         return None
     # end definition __init__

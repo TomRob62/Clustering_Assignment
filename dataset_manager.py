@@ -102,9 +102,4 @@ class Dataset_Manager:
                         self. iris_data[divisor:], self.iris_labels[divisor:]])
         return dataset
     
-    def get_iris_classes(self) -> tuple:
-        """
-    
-        """
-        return tuple(self.iris_classes)
 # end get_iris_classes
