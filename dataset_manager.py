@@ -33,6 +33,11 @@ class Dataset_Manager:
 
     Functions
     ---------
+    get_iris_split()
+    get_iris_classes()
+    get_cancer_split()
+    get_cancer_classes()
+    get_boston_split()
 
     """
     # Iris Dataset
@@ -107,12 +112,14 @@ class Dataset_Manager:
         dataset = tuple([self.iris_data[:divisor], self.iris_labels[:divisor],
                         self. iris_data[divisor:], self.iris_labels[divisor:]])
         return dataset
+    # end get_iris_split()
     
     def get_iris_classes(self) -> list[str]:
         """
         Returns the target names for Iris dataset
         """
         return self.iris_classes
+    # end get_iris_classes()
     
     def get_cancer_split(self, training_split: float = 0.7) -> tuple[list, list, list, list]:
         """
@@ -138,12 +145,14 @@ class Dataset_Manager:
         dataset = tuple([self.cancer_data[:divisor], self.cancer_labels[:divisor],
                         self. cancer_data[divisor:], self.cancer_labels[divisor:]])
         return dataset
+    # end get_cancer_split()
     
     def get_cancer_classes(self) -> list[str]:
         """
         Returns the target names for cancer dataset
         """
         return self.cancer_classes
+    # end get_cancer_classes()
     
     def get_boston_split(self, training_split: float = 0.7) -> tuple[list, list, list, list]:
         """
@@ -169,3 +178,5 @@ class Dataset_Manager:
         dataset = tuple([self.boston_data[:divisor], self.boston_labels[:divisor],
                         self. boston_data[divisor:], self.boston_labels[divisor:]])
         return dataset
+    # end get_boston_split()
+# end class Dataset Manager
