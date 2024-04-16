@@ -14,6 +14,7 @@ import random
 
 # Use sklearn inbuilt datasets:
 from sklearn import datasets
+from copy import deepcopy
 from sklearn.model_selection import train_test_split as split
 
 
@@ -179,4 +180,14 @@ class Dataset_Manager:
                         self. boston_data[divisor:], self.boston_labels[divisor:]])
         return dataset
     # end get_boston_split()
+    def get_boston_whole(self) -> dict:
+        """
+        Returns the boston dataset as a whole (instead of training/testing splits)
+        """
+        # shuffles the data to add a degree of randomness. Data and Label correlation maintains integrity
+        temp = list(zip(self.boston_data, self.boston_labels))
+        random.shuffle(temp)
+        self.boston_data, self.boston_labels = zip(*temp)
+        
+        return self.boston_data, self.boston_labels
 # end class Dataset Manager
