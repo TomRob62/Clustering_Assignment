@@ -114,4 +114,34 @@ class Dataset_Manager:
         """
         return self.iris_classes
     
-# end get_iris_classes
+    def get_cancer_split(self, training_split: float = 0.7) -> tuple[list, list, list, list]:
+        """
+        Returns the cancer dataset 
+
+        Returns 
+        -------
+        train_data,
+        train_labels,
+        test_data,
+        test_labels
+        """
+        # finding integer value that represents training_split num
+        divisor = len(self.cancer_data)*training_split
+        divisor = round(divisor)
+
+        # shuffles the data to add a degree of randomness. Data and Label correlation maintains integrity
+        temp = list(zip(self.cancer_data, self.cancer_labels))
+        random.shuffle(temp)
+        self.cancer_data, self.cancer_labels = zip(*temp)
+
+        # return train, test split as tuple
+        dataset = tuple([self.cancer_data[:divisor], self.cancer_labels[:divisor],
+                        self. cancer_data[divisor:], self.cancer_labels[divisor:]])
+        return dataset
+    
+    def get_cancer_classes(self) -> list[str]:
+        """
+        Returns the target names for cancer dataset
+        """
+        return self.cancer_classes
+    # end get_cancer_classes
