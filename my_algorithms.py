@@ -17,8 +17,9 @@ import copy
 class My_ANN:
     """
     class Description: This class is intended to create/use an artificial neural
-    network from scratch. It uses the signmoid activation derivative and backpropagration to
-    train the network.
+    network from scratch. This ANN is used for multiclass categorization. This means 
+    that the datasets must have an integer type label corresponding to the target 
+    output.
 
     Attributes
     ----------
