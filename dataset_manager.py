@@ -108,4 +108,10 @@ class Dataset_Manager:
                         self. iris_data[divisor:], self.iris_labels[divisor:]])
         return dataset
     
+    def get_iris_classes(self) -> list[str]:
+        """
+        Returns the target names for Iris dataset
+        """
+        return self.iris_classes
+    
 # end get_iris_classes
