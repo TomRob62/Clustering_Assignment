@@ -7,12 +7,156 @@ April 11, 2024
 Program Desciption: This program contains all the algorithms that will be
 used in the main program to classify several datasets
 """
-
+from random import randint
 import numpy
 import math
-import random
 import copy
 
+class My_Cluster:
+    """
+    class Description: This class implements a k-means clustering algorithm
+    
+    Attributes
+    -----------
+
+    Functions
+    --------
+    """
+    num_centroids = 0
+    centroids = [numpy.ndarray]
+    clusters = []
+
+    data = []
+    label = []
+
+    def __init__(self, data: list, label: list, max_epoch: int, num_cent: int) -> None:
+        """
+        Constructor Function
+
+        Parameters
+        ----------
+        train_data
+        train_label
+        test_data
+        test_label
+        num_cent
+            number of centroids
+        """
+        self.data = data 
+        self.label = label 
+        self.max_epoch = max_epoch
+    
+        self.num_centroids = num_cent
+        self.centroids = []
+        self.clusters = []
+
+        # randomly assigning n number of centeroids
+        index_control = []
+        for i in range(self.num_centroids):
+            centroid_index = randint(0, (len(self.data)-1))
+            # checking that no two centroids are the same
+            while(index_control.__contains__(centroid_index)):
+                centroid_index = randint(0, (len(self.data)-1))
+            index_control.append(centroid_index)           
+            curr_centroid = copy.deepcopy(self.data[centroid_index])
+            self.centroids.append(curr_centroid)
+            cluster = [curr_centroid]
+            self.clusters.append(cluster)
+        return None
+    # end definition __init__
+
+    def kmeans_clustering(self) -> tuple[object]:
+        """
+        This method will cluster all the variables in the train dataset and
+        return the clusters as a tuple such like:
+            ([cluster 1], [cluster 2], ..., [cluster n])
+        """
+        old_centroids = []
+        current_epoch = 0
+        
+        # begin clustering algorithm
+        while(self.compare_centroids(old_centroids) == False and current_epoch < self.max_epoch):
+            for variable in self.data:
+                distances= []
+                for centroid in self.centroids:
+                    distances.append(self.euclidean(centroid, variable))
+                closest_index = distances.index(min(distances))
+                self.clusters[closest_index].append(variable)
+            # end for loop
+
+            #updating stop conditions
+            current_epoch += 1
+            old_centroids = copy.deepcopy(self.centroids)
+            for index in range(len(self.centroids)):
+                self.calculate_new_centroid(index)
+        # end while loop
+        return tuple(self.clusters)
+    # end kmean_clustering
+        
+
+    def compare_centroids(self, old_centroids: numpy.ndarray, degree: int = 6) -> bool:
+        """
+        determines if two lists of centroids are the same. It it iterively compares
+        the values of each corresponding centroid. This method is used as the 
+        stopping condition for k mean clustering
+        """
+        if len(old_centroids) == 0:
+            return False
+        
+        current_centroids = self.centroids
+        for cent_index in range(len(current_centroids)):
+            for val_index in range(len(current_centroids[cent_index])):
+                old_value = round(old_centroids[cent_index][val_index], degree)
+                new_value = round(current_centroids[cent_index][val_index], degree)
+                if not old_value == new_value:
+                    return False
+            # end value for loop
+        # end centroid for loop
+        return True
+    # end compare_centroids
+
+    def euclidean(self, var1: list[float], var2: list[float]) -> float:
+        """
+        calculates the euclidean distance between two variables
+
+        Parameters
+        -----------
+        var1
+            iterable with real numbers
+        var2 iterable with real numbers
+
+        Returns
+        -------
+        float
+        euclidean distance
+        """
+        if not len(var1) == len(var2):
+            print("\nError calculating euclidean distance. Object are not of the same length.")
+        distance = 0
+        for index in range(len(var1)):
+            distance += (var1[index] - var2[index])**2
+
+        return math.sqrt(distance)
+    # end euclidean_distance()
+
+    def calculate_new_centroid(self, index: int) -> None:
+        """
+        Calculates the new centroid values for a given cluster
+
+        Parameters
+        ----------
+        index: int
+            the index of the cluster/centroid being calculated
+        """
+        new_centroid = numpy.zeros(self.centroids[index].shape)
+        for variable in self.clusters[index]:
+            for num, value in enumerate(variable):
+                new_centroid[num] += value
+        new_centroid = new_centroid/(len(self.clusters[index]))
+        self.centroids[index] = new_centroid
+        return None
+    # end calculate_new_centroid
+# end class My_Cluster
 
 class My_ANN:
     """
