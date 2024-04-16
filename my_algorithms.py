@@ -13,6 +13,7 @@ import math
 import random
 import copy
 
+
 class My_ANN:
     """
     class Description: This class is intended to create/use an artificial neural
@@ -23,24 +24,43 @@ class My_ANN:
     ----------
     network
         a list of nodes
+    network_shape
+    lr
+        learning rate
+    epoch
+        max epoch for training
+    train_data_ds
+    train_label_ds
+    test_data_ds
+    test_label_ds
 
     Functions
     ---------
+    test_ann()
+    train_ann()
+    predict_var()
+        helper method that predicts the output for a single dataset variable
     """
-    network = []
+    network = []     # holds the node objects
+    network_shape = ()  # simple tuple to represent shape
+    lr = 0  # learning rate
+    epoch = 0  # max epoch
+    # dataset variables
     train_data_ds = []
     train_label_ds = []
     test_data_ds = []
     test_label_ds = []
 
-    def __init__(self, shape: tuple, train_data:list, train_label:list, test_data: list, test_label: list,) -> None:
+    def __init__(self, hidden_shape: tuple, num_out: int, train_data: list, train_label: list, test_data: list, test_label: list,) -> None:
         """
         Constructor Functions
 
         Parameters
         ----------
-        shape
-            The shape of the network
+        hidden_shape
+            The shape of the hidden layers
+        num_out
+            The number of target classes
         train_data
         train_label
         test_data
@@ -51,9 +71,18 @@ class My_ANN:
         self.test_data_ds = test_data
         self.test_label_ds = test_label
 
-        network_shape = list(shape)
+        # Inserting num of inputs and outputs in shape
+        network_shape = []
+        if hasattr(hidden_shape, '__iter__'):
+            for num in hidden_shape:
+                network_shape.append(num)
+        else:
+            network_shape.append(hidden_shape)
         network_shape.insert(0, len(train_data[0]))
+        network_shape.append(num_out)
+        self.network_shape = tuple(network_shape)
 
+        # creating Node objects and appending them to my_ann network
         self.network = []
         for index, num in enumerate(network_shape[1:], 1):
             layer = []
@@ -61,18 +90,38 @@ class My_ANN:
                 layer.append(Node(network_shape[index-1]))
             self.network.append(copy.deepcopy(layer))
         return None
-    
-    def test_ann(self) -> float:
+
+    def test_ann(self, dataset: int) -> float:
         """
-        Tests the ANN with the testing dataset and returns the accuracy
+        Tests the ANN with the selected dataset and returns the accuracy
+
+            dataset 1 = training dataset
+            dataset 2 = testing dataset
+        
+        Parameters
+        ----------
+        dataset: int
+            the integer id assigned to the dataset
         """
+        # bringing class variable to local method variable
+        if dataset == 1:
+            current_data = self.train_data_ds
+            current_label = self.train_label_ds
+        else:
+            current_data = self.test_data_ds
+            current_label = self.test_label_ds
+
+        # storing predictions for accuracy metric
         predictions = []
-        for num, inputs in enumerate(self.test_data_ds):
-            predicted_out = self.predict_var(inputs)
-            if predicted_out == self.test_label_ds[num]:
-                predictions.append([100, predicted_out, self.test_label_ds[num]])
+
+        # iterating through each input, label entry in dataset
+        for num, inputs in enumerate(current_data):
+            outputs = self.predict_var(inputs) # gets output for each output node
+            predicted_out = outputs.index(max(outputs)) # index of max output 
+            if predicted_out == current_label[num]: # checking correctness
+                predictions.append([100, predicted_out, current_label[num]])
             else:
-                predictions.append([0, predicted_out, self.test_label_ds[num]])
+                predictions.append([0, predicted_out, current_label[num]])
 
         # calculating average accuracy for predictions list
         accuracy = 0
@@ -83,6 +132,82 @@ class My_ANN:
         return accuracy/len(predictions)
     # end test_ann
 
+    def train_ann(self, learning_rate: float, max_epoch: int) -> float:
+        """
+        This method trains the multiclass ANN with the training_dataset. It uses
+        sum of squares loss function.
+
+            Error = sum(0.5(actual - predicted)**2)
+
+        Parameters
+        -----------
+        learning_rate
+            recommended rate is 0.1
+        max_epoch
+            recommended rate is 1000
+        """
+        # conditions for stopping training
+        training_accuracy = 0
+        current_epoch = 0
+
+        while training_accuracy < 99 and current_epoch < max_epoch:
+            # one epoch
+            training_accuracy = 0
+            for train_index, train_var in enumerate(self.train_data_ds):
+                # feed forward
+                pred_out = self.predict_var(train_var)
+                pred_index = pred_out.index(max(pred_out))
+
+                # creating target out list
+                target_out = [0 for num in pred_out]
+                target_index = self.train_label_ds[train_index]
+                target_out[target_index] = 1
+
+                # adjusting training accuracy
+                if pred_index == target_index:
+                    training_accuracy += 100
+
+                # begin backpropagation
+                # calculating error = 0.5(actual - prediction)**2
+                output_error = []
+                for index in range(len(pred_out)):
+                    output_error.append(0.5*((target_out[index]-pred_out[index]**2)))
+
+                # bringing output layer as local variable
+                layer_index = len(self.network)-1
+                layer = self.network[layer_index]
+
+                # calculated weight adjustment for each node in output layer
+                for num_node, out_node in enumerate(layer):
+                    dE_dout = -1*(target_out[num_node] - out_node.normalized_out)
+                    dout_dnet = out_node.normalized_out*(1-out_node.normalized_out)
+                    out_node.adjust_weights(dE_dout, dout_dnet, learning_rate)
+
+                # hidden layers
+                layer_index -= 1
+                while layer_index >= 0: # iterated through each hidden layer in network
+                    hidden_layer = self.network[layer_index]
+                    # iterates through each node in current hidden layer
+                    # and calculates weight adjustment
+                    for hidden_index, hidden_node in enumerate(hidden_layer):
+                        dE_dout = 0
+                        for previous_node in self.network[layer_index+1]:
+                            dE_dout += previous_node.get_derivatives(hidden_index)
+                        dout_dnet = hidden_node.normalized_out*(1-hidden_node.normalized_out)
+                        hidden_node.adjust_weights(dE_dout, dout_dnet, learning_rate)
+                    # end node for loop
+                    layer_index -= 1
+                # end layer while loop
+            # end epoch for loop
+
+            # updating conditions to stop
+            training_accuracy = training_accuracy/len(self.train_data_ds)
+            current_epoch += 1
+        # end training while loop
+        return training_accuracy, current_epoch
+    # end definition
+
+
     def predict_var(self, var) -> str | int:
         """
         Makes a prediction when given a variable from a dataset
@@ -92,11 +217,23 @@ class My_ANN:
             outputs = []
             for node in layer:
                 outputs.append(node.get_output(inputs))
-            inputs = tuple(outputs)
+            inputs = tuple(copy.copy(outputs))
 
         # returning the index of the highest
-        return outputs.index(max(outputs))
-    
+        return outputs
+    # end of predict_var()
+
+    def __str__(self) -> str:
+        """
+        Returns a string equivalents of My_ANN
+        """
+        ann_string = "\nANN of shape:" + str(self.network_shape)
+        for num, layer in enumerate(self.network):
+            ann_string += "\n\nLayer %s" % num
+            for node in layer:
+                ann_string += "\n" + str(node)
+        return ann_string
+
 class Node:
     """
     class Description: Node for an ANN
@@ -107,20 +244,30 @@ class Node:
     weights
     raw_out
     normalized_out
+    dE_dout
+    dout_dnet
 
     Functions
     ---------
+    get_derivates()
+        helper method for backpropgation
+    adjust_weights()
+        helper method for backpropgation
     get_output()
+        helper method for forward pass
     """
     inputs = []
     weights = []
     raw_out = 0
     normalized_out = 0
+    # attributes for backpropagation
+    dE_dout = 0
+    dout_dnet = 0
 
     def __init__(self, num_inputs) -> None:
         """
         Constructor function
-        
+
         Parameters
         ----------
         num_inputs
@@ -131,8 +278,43 @@ class Node:
         self.weights = numpy.random.random(num_inputs+1)
         self.raw_out = 0
         self.normalized_out = 0
+        self.dE_dout = 0
+        self.dout_dnet = 0
         return None
     # end of __init__()
+
+    def get_derivatives(self, hidden_index) -> float:
+        """
+        returns multiplication of derivatives needed for backpropagation
+
+        Parameters
+        ----------
+        hidden_index
+            the index of the weight associated with node requesting the derivate
+        """
+        return (self.dE_dout*self.dout_dnet*self.weights[hidden_index])
+
+    def adjust_weights(self, dE_dout: float, dout_dnet: float,  learning_rate: float) -> None:
+        """
+        Adjusts the weights of a node and returns the error of that node
+
+        Parameters
+        -----------
+        learning rate: float
+        previous: float
+            error of the node prior to this
+        """
+        self.dE_dout = dE_dout
+        self.dout_dnet = dout_dnet
+
+        # adjusting weights
+        for index in range(len(self.inputs)):
+            self.weights[index] = self.weights[index]- (learning_rate*dE_dout*dout_dnet*self.inputs[index])
+
+        # adjusting bias
+        self.weights[len(self.weights)-1] = self.weights[len(self.weights)-1] - (learning_rate*dE_dout*dout_dnet)
+
+        return None
 
     def get_output(self, inputs: list[float]) -> float:
         """
@@ -152,7 +334,8 @@ class Node:
         """
         # checking that the number of inputs is correct
         if not (len(inputs)+1) == len(self.weights):
-            print("\nError: Wrong number of inputs. Expected %s, got %s" % (len(self.weights), len(inputs)))
+            print("\nError: Wrong number of inputs. Expected %s, got %s" %
+                  (len(self.weights), len(inputs)))
 
         # multiplying inputs by corresponding weights
         sum_output = 0
@@ -162,10 +345,10 @@ class Node:
         # adding bias weights
         sum_output += self.weights[len(self.weights)-1]
 
-        # storing data 
+        # storing data
         self.inputs = inputs
         self.raw_out = sum_output
-        self.normalized_out = 1/(1+math.e**(-1*sum_output)) # applying signmoid
+        self.normalized_out = 1/(1+math.e**(-1*sum_output))  # applying signmoid
         return self.normalized_out
     # end of get_output()
 
@@ -174,7 +357,7 @@ class Node:
         returns a string equivalent of Node object
         """
         return str(self.weights)
-        
+
 class My_KNN:
     """
     Description: This class holds the variables and functions related kNN 
@@ -198,7 +381,7 @@ class My_KNN:
     test_data_ds = []
     test_label_ds = []
 
-    def __init__(self, train_data:list, train_label:list, test_data: list, test_label: list, k: int) -> None:
+    def __init__(self, train_data: list, train_label: list, test_data: list, test_label: list, k: int) -> None:
         """
         Constructor Function
 
@@ -231,10 +414,12 @@ class My_KNN:
         for num, var in enumerate(self.test_data_ds):
             prediction = self.predict_var(var)
             if prediction == self.test_label_ds[num]:
-                list_of_predictions.append([100, prediction, self.test_label_ds[num]])
+                list_of_predictions.append(
+                    [100, prediction, self.test_label_ds[num]])
             else:
-                list_of_predictions.append([0, prediction, self.test_label_ds[num]])
-        
+                list_of_predictions.append(
+                    [0, prediction, self.test_label_ds[num]])
+
         # calculating average accuracy for predictions list
         accuracy = 0
         for prediction in list_of_predictions:
@@ -251,7 +436,7 @@ class My_KNN:
         -----------
         var1 
             list of inputs for 1 variable entry
-        
+
         Returns
         ---------
         int | str
@@ -276,7 +461,7 @@ class My_KNN:
             c_index = list_of_distance.index(distance)
             c_class = self.train_label_ds[c_index]
             neighbors[c_class] += 1
-        
+
         # returning the class of majority vote
         return neighbors.index(max(neighbors))
 
@@ -295,11 +480,12 @@ class My_KNN:
         Returns
         -------
         euclidean_distance: float
-        
+
         """
         # checking each var has same num attributes
         if not len(var1) == len(var2):
-            print("Error calculated euclidean distance. Variable lists have different number of attributes")
+            print(
+                "Error calculated euclidean distance. Variable lists have different number of attributes")
             return -1
         # end if
 
