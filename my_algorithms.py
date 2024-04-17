@@ -13,6 +13,7 @@ import numpy
 import math
 import copy
 
+class My_Decision_Tree:
 
 class My_Cluster:
     """
@@ -20,9 +21,17 @@ class My_Cluster:
 
     Attributes
     -----------
+    num_centroids
+    centroids
+    clusters
+    cluster_labels
+    data
+    labels
 
     Functions
     --------
+    kmeans_clustering()
+    display_clusters()
     """
     num_centroids = 0
     centroids = [numpy.ndarray]
