@@ -180,9 +180,14 @@ class Dataset_Manager:
                         self. boston_data[divisor:], self.boston_labels[divisor:]])
         return dataset
     # end get_boston_split()
-    def get_boston_whole(self) -> dict:
+    def get_boston_whole(self) -> tuple[list]:
         """
         Returns the boston dataset as a whole (instead of training/testing splits)
+
+        Returns
+        -------
+        boston_data
+        boston_labels
         """
         # shuffles the data to add a degree of randomness. Data and Label correlation maintains integrity
         temp = list(zip(self.boston_data, self.boston_labels))
