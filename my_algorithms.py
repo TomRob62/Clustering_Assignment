@@ -82,10 +82,13 @@ class My_Cluster:
             self.clusters = [list() for x in range(self.num_centroids)]
             self.cluster_labels = [list() for x in range(self.num_centroids)]
 
+            # iterating through dataset
             for num, variable in enumerate(self.data):
                 distances = []
+                # finding euclidean distance
                 for centroid in self.centroids:
                     distances.append(self.euclidean(centroid, variable))
+                # assigning to cluster
                 closest_index = distances.index(min(distances))
                 self.cluster_labels[closest_index].append(self.label[num])
                 self.clusters[closest_index].append(variable)
@@ -104,10 +107,12 @@ class My_Cluster:
     # todo
     def display_clusters(self) -> None:
         """
-        displays current clusters as a color coded scatterplot
+        displays current clusters as a color coded scatterplot.
+        Each cluster is color coded. There are 3 subplots that show 
+        different features for each cluster variable.
         """
-        # Plot the clusters obtained using k means
         fig = plt.figure()
+        # assigning each cluster a color
         my_colors = ["red", "black", "blue", "green"]
         for num, my_color in enumerate(my_colors):
             features = [(12, 'LSTAT'), (5, 'RM'), (9, "Tax")]
