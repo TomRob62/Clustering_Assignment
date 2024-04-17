@@ -8,14 +8,16 @@ Program Desciption: This program contains all the algorithms that will be
 used in the main program to classify several datasets
 """
 from random import randint
+from matplotlib import pyplot as plt
 import numpy
 import math
 import copy
 
+
 class My_Cluster:
     """
     class Description: This class implements a k-means clustering algorithm
-    
+
     Attributes
     -----------
 
@@ -25,6 +27,7 @@ class My_Cluster:
     num_centroids = 0
     centroids = [numpy.ndarray]
     clusters = []
+    cluster_labels = []
 
     data = []
     label = []
@@ -42,26 +45,25 @@ class My_Cluster:
         num_cent
             number of centroids
         """
-        self.data = data 
-        self.label = label 
+        self.data = data
+        self.label = label
         self.max_epoch = max_epoch
-    
+
         self.num_centroids = num_cent
         self.centroids = []
-        self.clusters = []
+        self.clusters = [list() for x in range(num_cent)]
+        self.cluster_labels = [list() for x in range(num_cent)]
 
         # randomly assigning n number of centeroids
         index_control = []
         for i in range(self.num_centroids):
             centroid_index = randint(0, (len(self.data)-1))
             # checking that no two centroids are the same
-            while(index_control.__contains__(centroid_index)):
+            while (index_control.__contains__(centroid_index)):
                 centroid_index = randint(0, (len(self.data)-1))
-            index_control.append(centroid_index)           
+            index_control.append(centroid_index)
             curr_centroid = copy.deepcopy(self.data[centroid_index])
             self.centroids.append(curr_centroid)
-            cluster = [curr_centroid]
-            self.clusters.append(cluster)
         return None
     # end definition __init__
 
@@ -73,28 +75,59 @@ class My_Cluster:
         """
         old_centroids = []
         current_epoch = 0
-        
+
         # begin clustering algorithm
-        while(self.compare_centroids(old_centroids) == False and current_epoch < self.max_epoch):
-            for variable in self.data:
-                distances= []
+        while (self.compare_centroids(old_centroids) == False and current_epoch < self.max_epoch):
+            # cleaning clusters so we can add new variables
+            self.clusters = [list() for x in range(self.num_centroids)]
+            self.cluster_labels = [list() for x in range(self.num_centroids)]
+
+            for num, variable in enumerate(self.data):
+                distances = []
                 for centroid in self.centroids:
                     distances.append(self.euclidean(centroid, variable))
                 closest_index = distances.index(min(distances))
+                self.cluster_labels[closest_index].append(self.label[num])
                 self.clusters[closest_index].append(variable)
             # end for loop
 
-            #updating stop conditions
+            # updating stop conditions
             current_epoch += 1
             old_centroids = copy.deepcopy(self.centroids)
             for index in range(len(self.centroids)):
                 self.calculate_new_centroid(index)
         # end while loop
+        print("Developed Clusters in %s epoch." % current_epoch)
         return tuple(self.clusters)
     # end kmean_clustering
-        
 
-    def compare_centroids(self, old_centroids: numpy.ndarray, degree: int = 6) -> bool:
+    # todo
+    def display_clusters(self) -> None:
+        """
+        displays current clusters as a color coded scatterplot
+        """
+        # Plot the clusters obtained using k means
+        fig = plt.figure()
+        my_colors = ["red", "black", "blue", "green"]
+        for num, my_color in enumerate(my_colors):
+            features = [(12, 'LSTAT'), (5, 'RM'), (9, "Tax")]
+            for i, feat in enumerate(features):
+                my_cluster = []
+                for var in self.clusters[num]:
+                    my_cluster.append(var[feat[0]])
+                # end for var loop
+                plt.subplot(1, len(features), i+1)
+                plt.scatter(my_cluster, self.cluster_labels[num], color=my_color)
+                plt.title(feat[1])
+                plt.xlabel(feat[1])
+                plt.ylabel('MEDV')
+            # end for feature loop
+        # end for color loop
+        plt.show()
+        return None
+    # end display_clusters
+
+    def compare_centroids(self, old_centroids: numpy.ndarray) -> bool:
         """
         determines if two lists of centroids are the same. It it iterively compares
         the values of each corresponding centroid. This method is used as the 
@@ -102,12 +135,12 @@ class My_Cluster:
         """
         if len(old_centroids) == 0:
             return False
-        
+
         current_centroids = self.centroids
         for cent_index in range(len(current_centroids)):
             for val_index in range(len(current_centroids[cent_index])):
-                old_value = round(old_centroids[cent_index][val_index], degree)
-                new_value = round(current_centroids[cent_index][val_index], degree)
+                old_value = old_centroids[cent_index][val_index]
+                new_value = current_centroids[cent_index][val_index]
                 if not old_value == new_value:
                     return False
             # end value for loop
@@ -131,7 +164,8 @@ class My_Cluster:
         euclidean distance
         """
         if not len(var1) == len(var2):
-            print("\nError calculating euclidean distance. Object are not of the same length.")
+            print(
+                "\nError calculating euclidean distance. Object are not of the same length.")
         distance = 0
         for index in range(len(var1)):
             distance += (var1[index] - var2[index])**2
@@ -157,6 +191,7 @@ class My_Cluster:
         return None
     # end calculate_new_centroid
 # end class My_Cluster
+
 
 class My_ANN:
     """
@@ -242,7 +277,7 @@ class My_ANN:
 
             dataset 1 = training dataset
             dataset 2 = testing dataset
-        
+
         Parameters
         ----------
         dataset: int
@@ -261,9 +296,10 @@ class My_ANN:
 
         # iterating through each input, label entry in dataset
         for num, inputs in enumerate(current_data):
-            outputs = self.predict_var(inputs) # gets output for each output node
-            predicted_out = outputs.index(max(outputs)) # index of max output 
-            if predicted_out == current_label[num]: # checking correctness
+            # gets output for each output node
+            outputs = self.predict_var(inputs)
+            predicted_out = outputs.index(max(outputs))  # index of max output
+            if predicted_out == current_label[num]:  # checking correctness
                 predictions.append([100, predicted_out, current_label[num]])
             else:
                 predictions.append([0, predicted_out, current_label[num]])
@@ -316,7 +352,8 @@ class My_ANN:
                 # calculating error = 0.5(actual - prediction)**2
                 output_error = []
                 for index in range(len(pred_out)):
-                    output_error.append(0.5*((target_out[index]-pred_out[index]**2)))
+                    output_error.append(
+                        0.5*((target_out[index]-pred_out[index]**2)))
 
                 # bringing output layer as local variable
                 layer_index = len(self.network)-1
@@ -324,22 +361,27 @@ class My_ANN:
 
                 # calculated weight adjustment for each node in output layer
                 for num_node, out_node in enumerate(layer):
-                    dE_dout = -1*(target_out[num_node] - out_node.normalized_out)
-                    dout_dnet = out_node.normalized_out*(1-out_node.normalized_out)
+                    dE_dout = -1*(target_out[num_node] -
+                                  out_node.normalized_out)
+                    dout_dnet = out_node.normalized_out * \
+                        (1-out_node.normalized_out)
                     out_node.adjust_weights(dE_dout, dout_dnet, learning_rate)
 
                 # hidden layers
                 layer_index -= 1
-                while layer_index >= 0: # iterated through each hidden layer in network
+                while layer_index >= 0:  # iterated through each hidden layer in network
                     hidden_layer = self.network[layer_index]
                     # iterates through each node in current hidden layer
                     # and calculates weight adjustment
                     for hidden_index, hidden_node in enumerate(hidden_layer):
                         dE_dout = 0
                         for previous_node in self.network[layer_index+1]:
-                            dE_dout += previous_node.get_derivatives(hidden_index)
-                        dout_dnet = hidden_node.normalized_out*(1-hidden_node.normalized_out)
-                        hidden_node.adjust_weights(dE_dout, dout_dnet, learning_rate)
+                            dE_dout += previous_node.get_derivatives(
+                                hidden_index)
+                        dout_dnet = hidden_node.normalized_out * \
+                            (1-hidden_node.normalized_out)
+                        hidden_node.adjust_weights(
+                            dE_dout, dout_dnet, learning_rate)
                     # end node for loop
                     layer_index -= 1
                 # end layer while loop
@@ -351,7 +393,6 @@ class My_ANN:
         # end training while loop
         return training_accuracy, current_epoch
     # end definition
-
 
     def predict_var(self, var) -> str | int:
         """
@@ -378,6 +419,7 @@ class My_ANN:
             for node in layer:
                 ann_string += "\n" + str(node)
         return ann_string
+
 
 class Node:
     """
@@ -454,10 +496,12 @@ class Node:
 
         # adjusting weights
         for index in range(len(self.inputs)):
-            self.weights[index] = self.weights[index]- (learning_rate*dE_dout*dout_dnet*self.inputs[index])
+            self.weights[index] = self.weights[index] - \
+                (learning_rate*dE_dout*dout_dnet*self.inputs[index])
 
         # adjusting bias
-        self.weights[len(self.weights)-1] = self.weights[len(self.weights)-1] - (learning_rate*dE_dout*dout_dnet)
+        self.weights[len(self.weights)-1] = self.weights[len(self.weights) -
+                                                         1] - (learning_rate*dE_dout*dout_dnet)
 
         return None
 
@@ -493,7 +537,8 @@ class Node:
         # storing data
         self.inputs = inputs
         self.raw_out = sum_output
-        self.normalized_out = 1/(1+math.e**(-1*sum_output))  # applying signmoid
+        self.normalized_out = 1 / \
+            (1+math.e**(-1*sum_output))  # applying signmoid
         return self.normalized_out
     # end of get_output()
 
@@ -502,6 +547,7 @@ class Node:
         returns a string equivalent of Node object
         """
         return str(self.weights)
+
 
 class My_KNN:
     """
